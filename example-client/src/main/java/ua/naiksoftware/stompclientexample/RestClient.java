@@ -9,7 +9,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class RestClient {
 
-    public static final String ANDROID_EMULATOR_LOCALHOST = "10.0.2.2";
+    public static final String ANDROID_EMULATOR_LOCALHOST = "52.169.119.102";//"10.0.2.2";
     public static final String SERVER_PORT = "8080";
 
     private static RestClient instance;

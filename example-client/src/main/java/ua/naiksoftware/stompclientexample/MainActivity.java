@@ -23,8 +23,12 @@ import io.reactivex.FlowableTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subscribers.DisposableSubscriber;
+import ua.naiksoftware.stomp.LifecycleEvent;
 import ua.naiksoftware.stomp.Stomp;
+import ua.naiksoftware.stomp.StompHeader;
 import ua.naiksoftware.stomp.client.StompClient;
+import ua.naiksoftware.stomp.client.StompMessage;
 
 import static ua.naiksoftware.stompclientexample.RestClient.ANDROID_EMULATOR_LOCALHOST;
 
@@ -52,40 +56,79 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void disconnectStomp(View view) {
-        mStompClient.disconnect();
+        if (mStompClient != null)
+            mStompClient.disconnect();
     }
 
     public void connectStomp(View view) {
-        mStompClient = Stomp.over(WebSocket.class, "ws://" + ANDROID_EMULATOR_LOCALHOST
-                + ":" + RestClient.SERVER_PORT + "/example-endpoint/websocket");
+        mStompClient = Stomp.over(WebSocket.class, "ws://52.169.119.102:8080/telematics-client/v2/websocket");
+//                "ws://" + ANDROID_EMULATOR_LOCALHOST
+//                + ":" + RestClient.SERVER_PORT + "/telematics-client/v2/websocket");//"/example-endpoint/websocket");
 
         mStompClient.lifecycle()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(lifecycleEvent -> {
-                    switch (lifecycleEvent.getType()) {
-                        case OPENED:
-                            toast("Stomp connection opened");
-                            break;
-                        case ERROR:
-                            Log.e(TAG, "Stomp connection error", lifecycleEvent.getException());
-                            toast("Stomp connection error");
-                            break;
-                        case CLOSED:
-                            toast("Stomp connection closed");
+                .subscribe(new DisposableSubscriber<LifecycleEvent>() {
+                    @Override
+                    public void onNext(LifecycleEvent lifecycleEvent) {
+                        switch (lifecycleEvent.getType()) {
+                            case OPENED:
+                                toast("Stomp connection opened");
+                                break;
+                            case ERROR:
+                                Log.e(TAG, "Stomp connection error", lifecycleEvent.getException());
+                                break;
+                            case CLOSED:
+                                Log.e(TAG, "Stomp connection closed");
+                                break;
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        Log.e(TAG, "Stomp lifecycle error", t);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.e(TAG, "Stomp lifecycle complete");
                     }
                 });
 
+//                        lifecycleEvent -> {
+//
+//                });
+
         // Receive greetings
-        mStompClient.topic("/topic/greetings")
+        mStompClient.topic("/user/topic/serverMessage")
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(topicMessage -> {
-                    Log.d(TAG, "Received " + topicMessage.getPayload());
-                    addItem(mGson.fromJson(topicMessage.getPayload(), EchoModel.class));
-                });
+                .subscribe(new DisposableSubscriber<StompMessage>() {
+                    @Override
+                    public void onNext(StompMessage topicMessage) {
 
-        mStompClient.connect();
+                        Log.d(TAG, "Received " + topicMessage.getPayload());
+                        addItem(mGson.fromJson(topicMessage.getPayload(), EchoModel.class));
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        Log.e(TAG, "Stomp topic error", t);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.e(TAG, "Stomp connection onComplete");
+                    }
+                });
+//                .subscribe(topicMessage -> {
+//                    Log.d(TAG, "Received " + topicMessage.getPayload());
+//                    addItem(mGson.fromJson(topicMessage.getPayload(), EchoModel.class));
+//                });
+
+        ArrayList<StompHeader> headers = new ArrayList<>();
+        headers.add(new StompHeader("userId", "3cbfc7c0-4191-41f0-9e93-bb21888f1c6f"));
+        mStompClient.connect(headers);
     }
 
     public void sendEchoViaStomp(View v) {
@@ -112,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addItem(EchoModel echoModel) {
-        mDataSet.add(echoModel.getEcho() + " - " + mTimeFormat.format(new Date()));
+        mDataSet.add(echoModel.getTitle() + "\n " +echoModel.getContent());
         mAdapter.notifyDataSetChanged();
         mRecyclerView.smoothScrollToPosition(mDataSet.size() - 1);
     }

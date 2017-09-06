@@ -9,6 +9,12 @@ import retrofit2.http.Query;
  */
 public interface ExampleRepository {
 
-    @POST("hello-convert-and-send")
+    @POST("/app/message")//"hello-convert-and-send")
     Flowable<Void> sendRestEcho(@Query("msg") String message);
+
+//    @POST("/user/topic/serverMessage")
+//    Flowable<Void> getTopicAddress();
+//
+//    @POST("/app/message")
+//    Flowable<Void> sendMsg(@Query("msg") String message);
 }

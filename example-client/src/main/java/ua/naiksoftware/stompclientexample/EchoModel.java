@@ -5,16 +5,34 @@ package ua.naiksoftware.stompclientexample;
  */
 public class EchoModel {
 
-    private String echo;
+    private String title;
+    private String type;
+    private String content;
 
     public EchoModel() {
     }
 
-    public String getEcho() {
-        return echo;
+    public String getTitle() {
+        return title;
     }
 
-    public void setEcho(String echo) {
-        this.echo = echo;
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }
